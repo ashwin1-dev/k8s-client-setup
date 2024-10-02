@@ -1,0 +1,68 @@
+    1  yum update -y
+    2  yum  -y  install  net-tools  wget   telnet  yum-utils
+    3  yum install epel-release -y
+    4  ifconfig 
+    5  ifconfig  eth1
+    6  vi /etc/sysconfig/network-scripts/eth1
+    7  vi /etc/sysconfig/network-scripts/ifcfg-eth1 
+    8  service network restart
+    9  ifconfig  eth1
+   10  hostnamectl set-hostname 'worker1'
+   11  exit
+   12  clear
+   13  cat <<EOF>> /etc/hosts
+   14  192.168.0.41 master
+   15  192.168.0.42 worker1
+   16  192.168.0.43 worker2
+   17  EOF
+   18  swapoff  -a
+   19  vi /etc/fstab 
+   20  setenforce 0
+   21  sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
+   22  firewall-cmd --permanent --add-port=10250/tcp
+   23  firewall-cmd --permanent --add-port=10255/tcp
+   24  firewall-cmd --permanent --add-port=8472/udp
+   25  firewall-cmd --permanent --add-port=30000-32767/tcp
+   26  firewall-cmd --add-masquerade --permanent
+   27  systemctl restart firewalld
+   28  service filewalld status
+   29   systemctl restart firewalld
+   30     systemctl  enable firewalld
+   31     systemctl  start firewalld
+   32  firewall-cmd --permanent --add-port=10250/tcp
+   33  firewall-cmd --permanent --add-port=10255/tcp
+   34  firewall-cmd --permanent --add-port=8472/udp
+   35  firewall-cmd --permanent --add-port=30000-32767/tcp
+   36  firewall-cmd --add-masquerade --permanent
+   37  firewall-cmd --permanent --add-port=6783/tcp
+   38  firewall-cmd --permanent --add-port=10250/tcp
+   39  firewall-cmd --permanent --add-port=10255/tcp
+   40  firewall-cmd --permanent --add-port=30000-32767/tcp
+   41  echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
+   42  yum install -y yum-utils
+   43  yum-config-manager     --add-repo     https://download.docker.com/linux/centos/docker-ce.repo
+   44  yum install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
+   45  systemctl start docker
+   46  systemctl enable docker
+   47  sudo setenforce 0
+   48  sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+   49  cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+   50  [kubernetes]
+   51  name=Kubernetes
+   52  baseurl=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/
+   53  enabled=1
+   54  gpgcheck=1
+   55  gpgkey=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key
+   56  exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
+   57  EOF
+   58  sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+   59  sudo systemctl enable --now kubelet
+   60  service docker status
+   61  service kubelet status
+   62  cat /etc/hosts
+   63  ifconfig eth1
+   64  kubeadm join 192.168.0.41:6443 --token xgxf35.kk7qolfjfdmzmrvi         --discovery-token-ca-cert-hash sha256:b63ffe78453ea28aaa112c76adb3866cc44964197e558905f9b7fb49611fcd1a
+   65  rm /etc/containerd/config.toml
+   66  systemctl restart containerd
+   67  kubeadm join 192.168.0.41:6443 --token xgxf35.kk7qolfjfdmzmrvi         --discovery-token-ca-cert-hash sha256:b63ffe78453ea28aaa112c76adb3866cc44964197e558905f9b7fb49611fcd1a
+   68  kubectl get nodes
